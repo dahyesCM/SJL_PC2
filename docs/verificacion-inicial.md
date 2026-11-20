@@ -19,3 +19,22 @@ La verificación local del 19 de noviembre de 2026 pasó lint, tipos y compilaci
 2. Inicio en Jira. PRAC-5 pasó a En curso, asignada a Damarys. Las capturas de los dos estados se tomaron en la conversación.
 3. Git local. El primer commit registra la base que ya existía. La rama de trabajo separa el workflow y la documentación de verificación para PRAC-5.
 4. Evidencia pendiente en GitHub. Registrar el PR a test, el control fallido, el run exitoso y la regla de checks obligatorios. Capturar la revisión y cerrar PRAC-5 después de cumplir esos criterios.
+
+## Corte de avance del piloto
+
+El 19 de noviembre se actualizaron PRAC-5 a PRAC-16 con el estado verificable de sus doce tarjetas. Las notas preservan los criterios y dejan explícitos los controles que faltan antes de aceptar cada historia.
+
+| Jira | Evidencia de Git local | Resultado |
+| --- | --- | --- |
+| PRAC-5 | `4dbb2f6`, `ae1af0a` | Base y workflow inicial |
+| PRAC-6 | `c3e8480`, `9ce209f` | Portada y navegación |
+| PRAC-8 | `c3e8480`, `e0547cc` | Mapa y calor por sector |
+| PRAC-9 | `7878a3e`, `9ae65f8`, `b4bf0dd` | Registro, sesión y alias |
+| PRAC-10 | `7878a3e`, `b4bf0dd`, `f7dae8e` | Reporte, ubicación opcional y detalle |
+| PRAC-11 | `7878a3e`, `f7dae8e` | Perfil e historial privado |
+| PRAC-12 | `7878a3e` | Panel y rol local |
+| PRAC-14 | `9ce209f` | Orientación y rutas oficiales |
+
+Las capturas del guion, los gráficos de planificación y los espacios para evidencia posterior se incorporaron al informe Word de avance. El informe queda como material de entrega y sus capturas se conservan fuera del repositorio.
+
+El siguiente control de PRAC-5 requiere un remoto de GitHub para abrir un PR de trabajo a test, comprobar el check y registrar su URL. PRAC-7 registra la integración de Supabase. PRAC-16 registra la decisión del proveedor y el despliegue tras las verificaciones.
