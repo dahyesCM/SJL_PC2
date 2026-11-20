@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: sjl-previene-test
+    runtime: node
+    plan: free
+    branch: test
+    autoDeployTrigger: checksPass
+    buildCommand: npm ci && npm run verify
+    startCommand: npm run start -- --hostname 0.0.0.0
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "24.16.0"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
