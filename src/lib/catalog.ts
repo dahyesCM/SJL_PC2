@@ -1,6 +1,7 @@
 export const sectors = ["Norte", "Centro", "Sur"] as const;
 export const categories = ["Robo al paso", "Asalto en transporte", "Extorsión", "Microcomercialización", "Otro"] as const;
 export const periods = ["2026-T3", "2026-T4"] as const;
+export const reportDetailLimit = 280;
 export const statuses = { pending: "Pendiente de revisión", validated: "Validado en la demo", attended: "Atendido en la demo", rejected: "Rechazado" } as const;
 export type Status = keyof typeof statuses;
 

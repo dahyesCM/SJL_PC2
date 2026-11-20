@@ -43,6 +43,10 @@ export function database() {
       report_id INTEGER PRIMARY KEY REFERENCES reports(id) ON DELETE CASCADE,
       latitude REAL NOT NULL, longitude REAL NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS report_details (
+      report_id INTEGER PRIMARY KEY REFERENCES reports(id) ON DELETE CASCADE,
+      detail TEXT NOT NULL CHECK(length(detail) BETWEEN 1 AND 280)
+    );
     CREATE TRIGGER IF NOT EXISTS audit_report_status
     AFTER UPDATE OF status ON reports WHEN OLD.status <> NEW.status
     BEGIN
@@ -66,8 +70,8 @@ export function moderate(id: number, actor: number, next: Status) {
   }
 }
 
-export type Account = { id: number; alias: string; role: "citizen" | "moderator" };
-export type Report = { id: number; category: string; sector: string; period: string; status: Status; has_location?: number };
+export type Account = { id: number; alias: string; email: string; role: "citizen" | "moderator" };
+export type Report = { id: number; category: string; sector: string; period: string; status: Status; has_location?: number; detail?: string | null };
 
 const digest = (token: string) => createHash("sha256").update(token).digest("hex");
 
@@ -87,7 +91,7 @@ export async function currentAccount() {
   const token = (await cookies()).get(cookieName)?.value;
   if (!token || !/^[a-f0-9]{64}$/.test(token)) return undefined;
   return database().prepare(`
-    SELECT a.id, a.alias, a.role FROM sessions s JOIN accounts a ON a.id = s.account_id
+    SELECT a.id, a.alias, a.email, a.role FROM sessions s JOIN accounts a ON a.id = s.account_id
     WHERE s.token = ? AND s.expires > ?
   `).get(digest(token), Date.now()) as Account | undefined;
 }

@@ -1,7 +1,7 @@
 "use client";
 import { useActionState, useState } from "react";
 import { access, submitReport } from "./actions";
-import { categories, sectors, periods } from "../lib/catalog";
+import { categories, sectors, periods, reportDetailLimit } from "../lib/catalog";
 import { suggestSector } from "../lib/location";
 
 export function AccessForm({ register, disabled, next }: { register: boolean; disabled: boolean; next?: string }) {
@@ -45,6 +45,8 @@ export function AccessForm({ register, disabled, next }: { register: boolean; di
 export function ReportForm({ requestId }: { requestId: string }) {
   const [state, action, pending] = useActionState(submitReport, { message: "" });
   const [sector, setSector] = useState("");
+  const [category, setCategory] = useState("");
+  const [detail, setDetail] = useState("");
   const [position, setPosition] = useState("");
   const [locating, setLocating] = useState(false);
   const [locationNote, setLocationNote] = useState("");
@@ -71,10 +73,6 @@ export function ReportForm({ requestId }: { requestId: string }) {
       setLocationNote("No se obtuvo permiso o señal. Puedes enviar el reporte sin ubicación.");
     }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 });
   }
-  const fields = [
-    { label: "Categoría", name: "category", values: categories.map(value => ({ value, label: value })) },
-    { label: "Periodo", name: "period", values: periods.map((value, index) => ({ value, label: index === 0 ? "Julio a septiembre de 2026" : "Octubre a diciembre de 2026" })) },
-  ];
   return <form action={action} className="form-stack">
     <input type="hidden" name="requestId" value={requestId} />
     <input type="hidden" name="position" value={position} />
@@ -84,11 +82,27 @@ export function ReportForm({ requestId }: { requestId: string }) {
         {sectors.map(value => <option key={value}>{value}</option>)}
       </select>
     </label>
-    {fields.map(({label, name, values}) => <label key={name}>{label}
-      <select name={name} required defaultValue=""><option value="" disabled>Selecciona una opción</option>
-        {values.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+    <label>Categoría
+      <select name="category" required value={category} onChange={event => setCategory(event.target.value)}>
+        <option value="" disabled>Selecciona una categoría</option>
+        {categories.map(value => <option key={value}>{value}</option>)}
       </select>
-    </label>)}
+    </label>
+    {category === "Otro" && <div className="report-detail-field">
+      <label htmlFor="report-detail">Detalle del incidente (opcional)</label>
+      <textarea id="report-detail" name="detail" rows={4} maxLength={reportDetailLimit} value={detail}
+        onChange={event => setDetail(event.target.value)} aria-describedby="report-detail-help report-detail-count"
+        placeholder="Describe brevemente qué ocurrió" />
+      <small id="report-detail-help">Evita nombres, direcciones exactas, teléfonos y otros datos personales.</small>
+      <small id="report-detail-count">{detail.length} de {reportDetailLimit} caracteres</small>
+    </div>}
+    <label>Periodo
+      <select name="period" required defaultValue="">
+        <option value="" disabled>Selecciona un periodo</option>
+        <option value={periods[0]}>Julio a septiembre de 2026</option>
+        <option value={periods[1]}>Octubre a diciembre de 2026</option>
+      </select>
+    </label>
     <fieldset className="registration-details report-location">
       <legend>Ubicación del incidente (opcional)</legend>
       <small>Usa tu ubicación si estás en el sector del incidente. Solo se guarda un área aproximada y queda fuera del mapa público.</small>

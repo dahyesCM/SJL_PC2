@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { categories, periods, sectors } from "../lib/catalog";
+import { categories, periods, reportDetailLimit, sectors } from "../lib/catalog";
 import { suggestSector } from "../lib/location";
 import { closeSession, currentAccount, database, demoEnabled, moderate, openSession, passwordHash, passwordMatches } from "../lib/demo";
 
@@ -49,8 +49,12 @@ export async function submitReport(_state: FormState, data: FormData): Promise<F
   const category = categories.find(value => value === field(data, "category"));
   const period = periods.find(value => value === field(data, "period"));
   const requestId = field(data, "requestId");
+  const detail = field(data, "detail");
   if (!sector || !category || !period || !/^[a-f0-9-]{36}$/.test(requestId) || data.get("demo") !== "on") {
     return { message: "Elige un sector, una categoría y un periodo y confirma el uso de la versión piloto." };
+  }
+  if (detail && (category !== "Otro" || detail.length > reportDetailLimit || /\p{Cc}/u.test(detail.replace(/[\r\n\t]/g, "")))) {
+    return { message: `El detalle se admite en la categoría Otro y debe tener hasta ${reportDetailLimit} caracteres.` };
   }
   const position = field(data, "position");
   const parts = position.split(",");
@@ -67,6 +71,7 @@ export async function submitReport(_state: FormState, data: FormData): Promise<F
   try {
     const created = result.get(account.id, requestId, sector, category, period) as { id: number } | undefined;
     if (created && position) db.prepare("INSERT INTO report_locations VALUES (?, ?, ?)").run(created.id, latitude, longitude);
+    if (created && detail) db.prepare("INSERT INTO report_details (report_id, detail) VALUES (?, ?)").run(created.id, detail);
     db.exec("COMMIT");
   } catch (error) {
     db.exec("ROLLBACK");
