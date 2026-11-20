@@ -106,8 +106,26 @@ h2 { font-size: clamp(1.6rem, 4vw, 2.6rem); margin: .25rem 0; letter-spacing: -.
 .form-stack .button { justify-self: start; }
 .report-list li { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin-bottom: .65rem; }
 .review-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.home-paths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1.25rem; }
+.home-paths article, .orientation-options details { padding: 1.25rem; border: 1px solid #d6e0d6; border-radius: 1rem; background: #fff; }
+.home-paths h2 { font-size: 1.3rem; }
+.home-paths p, .orientation-options p, .access-aside p { line-height: 1.55; }
+.location-control { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; margin: -1rem 0 1.2rem; }
+.emergency { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; padding: 1.4rem; border-radius: 1rem; background: #f8eae2; border: 1px solid #e3caba; margin: 1.5rem 0; }
+.emergency .button { background: #7e3726; border-color: #7e3726; }
+.orientation-options { display: grid; gap: .7rem; }
+.orientation-options summary { cursor: pointer; font-weight: 750; padding: .35rem; }
+.access-layout { display: grid; grid-template-columns: minmax(0,.8fr) minmax(0,1.2fr); gap: clamp(1.2rem,5vw,4rem); align-items: start; }
+.access-aside { border-radius: 1.25rem; padding: clamp(1.25rem,4vw,2.5rem); background: #e4eee3; }
+.access-content h1 { font-size: clamp(2.5rem,5vw,4.5rem); }
+.registration-details { min-width: 0; display: grid; gap: .9rem; margin: 0; padding: 0; border: 0; }
+.registration-details legend { padding: 0 0 .75rem; font-weight: 750; }
+.form-row { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .75rem; }
+.form-stack input { min-width: 0; }
+.form-stack input[aria-invalid="true"] { border-color: #a03426; }
+.field-error { color: #9e3023; }
 @media (max-width: 700px) {
-  .hero, .explorer-grid { grid-template-columns: 1fr; }
+  .hero, .explorer-grid, .home-paths, .access-layout { grid-template-columns: 1fr; }
   .hero-picture { min-height: 12rem; }
   .stat-grid { gap: .35rem; }
   .stat-grid > div { padding: .6rem; font-size: .8rem; }

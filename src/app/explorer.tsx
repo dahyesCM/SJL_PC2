@@ -8,10 +8,36 @@ export function Explorer({ initialCategory = "", initialPeriod = "" }: { initial
   const [category, selectCategory] = useState(initialCategory);
   const [period, selectPeriod] = useState(initialPeriod);
   const [focused, focus] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationNote, setLocationNote] = useState("");
   const groups = sampleGroups.filter(group => (!category || group.category === category) && (!period || group.period === period));
   const totals = sectors.map(sector => ({ sector, total: groups.filter(group => group.sector === sector).reduce((sum, group) => sum + group.count, 0) }));
   const shown = focused ? groups.filter(group => group.sector === focused) : groups;
-  const sum = totals.reduce((total, zone) => total + zone.total, 0);
+  const sum = shown.reduce((total, group) => total + group.count, 0);
+
+  function locate() {
+    if (!navigator.geolocation) {
+      setLocationNote("Tu navegador no ofrece ubicación. Puedes elegir un sector en el mapa.");
+      return;
+    }
+    setLocating(true);
+    setLocationNote("Buscando tu sector aproximado…");
+    navigator.geolocation.getCurrentPosition(({ coords }) => {
+      setLocating(false);
+      const { latitude, longitude, accuracy } = coords;
+      // Extensión orientativa del esquema. No representa el límite distrital.
+      if (accuracy > 2500 || latitude < -12.04 || latitude > -11.87 || longitude < -77.055 || longitude > -76.93) {
+        setLocationNote("No podemos sugerir un sector con esta ubicación. Elige uno manualmente.");
+        return;
+      }
+      const suggestion = latitude >= -11.94 ? "Norte" : latitude >= -11.99 ? "Centro" : "Sur";
+      focus(suggestion);
+      setLocationNote("Sector aproximado: " + suggestion + ". Puedes cambiarlo en el mapa.");
+    }, () => {
+      setLocating(false);
+      setLocationNote("La ubicación no estuvo disponible. Puedes elegir un sector manualmente.");
+    }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 });
+  }
 
   return <section className="explorer" aria-labelledby="map-title">
     <div className="section-heading">
@@ -21,18 +47,23 @@ export function Explorer({ initialCategory = "", initialPeriod = "" }: { initial
     <p>Datos sintéticos de demostración · Sectores esquemáticos de SJL · Actualizado el 19 de noviembre de 2026.</p>
     <div className="stat-grid" aria-live="polite">
       <div><strong>{sum}</strong><span>Registros de la selección</span></div>
-      <div><strong>{totals.filter(zone => zone.total > 0).length}</strong><span>Sectores con datos</span></div>
-      <div><strong>{new Set(groups.map(group => group.category)).size}</strong><span>Categorías visibles</span></div>
+      <div><strong>{new Set(shown.map(group => group.sector)).size}</strong><span>Sectores con datos</span></div>
+      <div><strong>{new Set(shown.map(group => group.category)).size}</strong><span>Categorías visibles</span></div>
     </div>
     <div className="filters">
       <label>Categoría<select value={category} onChange={e => {selectCategory(e.target.value); focus(null);}}><option value="">Todas</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label>
       <label>Trimestre<select value={period} onChange={e => {selectPeriod(e.target.value); focus(null);}}><option value="">Todos</option>{periods.map(value => <option key={value}>{value}</option>)}</select></label>
-      <button type="button" className="button secondary" onClick={() => {selectCategory(""); selectPeriod(""); focus(null);}}>Restablecer</button>
+      <button type="button" className="button secondary" onClick={() => {selectCategory(""); selectPeriod(""); focus(null); setLocationNote("");}}>Restablecer</button>
     </div>
+    <div className="location-control">
+      <button type="button" className="button secondary" onClick={locate} disabled={locating}>Usar mi ubicación</button>
+      <small>Opcional. Tu ubicación solo se usa en este navegador.</small>
+    </div>
+    {locationNote && <p role="status" className="muted">{locationNote}</p>}
     <div className="explorer-grid">
       <div className="district-map" aria-label="Mapa esquemático por sectores">
         <span className="north-arrow" aria-hidden="true">↑ N</span>
-        {totals.map(({sector,total}) => <button key={sector} type="button" aria-pressed={focused === sector} className={total >= 10 ? "higher" : total ? "medium" : "empty"} onClick={() => focus(focused === sector ? null : sector)}><span>Sector {sector}</span><strong>{total || "—"}</strong></button>)}
+        {totals.map(({sector,total}) => <button key={sector} type="button" aria-pressed={focused === sector} className={total >= 10 ? "higher" : total ? "medium" : "empty"} onClick={() => {focus(focused === sector ? null : sector); setLocationNote("");}}><span>Sector {sector}</span><strong>{total || "—"}</strong></button>)}
       </div>
       <div className="zone-details" aria-live="polite">
         <h3>{focused ? "Sector " + focused : "Lista de zonas"}</h3>
@@ -40,6 +71,6 @@ export function Explorer({ initialCategory = "", initialPeriod = "" }: { initial
         {shown.length ? <ul className="zone-list">{shown.map(group => <li key={group.sector + group.period + group.category}><div><strong>{group.category}</strong><small>{group.sector} · {group.period}</small></div><span>{group.count}</span></li>)}</ul> : <p>Sin datos publicables para esta selección.</p>}
       </div>
     </div>
-    <p className="muted">Se omiten grupos menores de cinco. La falta de datos no indica que una zona sea segura.</p>
+    <p className="muted">El color más intenso representa más registros de demostración. Se omiten grupos menores de cinco. La falta de datos no indica que una zona sea segura.</p>
   </section>;
 }
