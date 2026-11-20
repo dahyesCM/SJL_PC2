@@ -71,7 +71,7 @@ export function moderate(id: number, actor: number, next: Status) {
 }
 
 export type Account = { id: number; alias: string; email: string; role: "citizen" | "moderator" };
-export type Report = { id: number; category: string; sector: string; period: string; status: Status; has_location?: number; detail?: string | null };
+export type Report = { id: number; category: string; sector: string; period: string; status: Status; has_location?: number | boolean; detail?: string | null };
 
 const digest = (token: string) => createHash("sha256").update(token).digest("hex");
 

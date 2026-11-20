@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { currentAccount, database, type Report } from "../../lib/demo";
+import { currentAccount } from "../../lib/accounts";
+import { listReports } from "../../lib/reports";
 import { statuses } from "../../lib/catalog";
 import { logout } from "../actions";
 export const dynamic = "force-dynamic";
@@ -8,12 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function History({ searchParams }: { searchParams: Promise<{ enviado?: string }> }) {
   const account = await currentAccount();
   if (!account) redirect("/login");
-  const reports = database().prepare(`
-    SELECT id, category, sector, period, status,
-      (SELECT d.detail FROM report_details d WHERE d.report_id = reports.id) AS detail,
-      EXISTS(SELECT 1 FROM report_locations l WHERE l.report_id = reports.id) AS has_location
-    FROM reports WHERE account_id = ? ORDER BY id DESC
-  `).all(account.id) as Report[];
+  const reports = await listReports(account);
   return <main id="contenido" tabIndex={-1}>
     <p className="district">Versión piloto</p>
     <h1>Mi perfil</h1>

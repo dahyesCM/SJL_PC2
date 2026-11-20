@@ -37,7 +37,7 @@ export function AccessForm({ register, disabled, next }: { register: boolean; di
     <label>Contraseña <input {...input("password")} type={visible ? "text" : "password"} autoComplete={register ? "new-password" : "current-password"} required minLength={10} maxLength={128} />{error("password")}</label>
     {register && <label>Confirmar contraseña <input {...input("confirm")} type={visible ? "text" : "password"} autoComplete="new-password" required minLength={10} maxLength={128} />{error("confirm")}</label>}
     <button type="button" className="text-button" aria-pressed={visible} onClick={() => setVisible(!visible)}>{visible ? "Ocultar" : "Mostrar"} contraseña</button>
-    {state.message && <p role="alert" className="notice">{state.message}</p>}
+    {state.message && <p role={state.success ? "status" : "alert"} className="notice">{state.message}</p>}
     <button className="button" disabled={disabled || pending}>{pending ? "Procesando…" : register ? "Crear cuenta" : "Iniciar sesión"}</button>
   </form>;
 }

@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { currentAccount, demoEnabled } from "../../lib/demo";
+import { currentAccount } from "../../lib/accounts";
 import { ReportForm } from "../forms";
 export const dynamic = "force-dynamic";
 export default async function Reportar() {
-  if (!demoEnabled || !await currentAccount()) redirect("/login?next=/reportar");
+  if (!await currentAccount()) redirect("/login?next=/reportar");
   return <main id="contenido" className="narrow" tabIndex={-1}>
     <p className="district">Versión piloto</p>
     <h1>Nuevo reporte</h1>

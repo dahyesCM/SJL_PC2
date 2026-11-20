@@ -3,14 +3,17 @@
 import { redirect } from "next/navigation";
 import { categories, periods, reportDetailLimit, sectors } from "../lib/catalog";
 import { suggestSector } from "../lib/location";
-import { closeSession, currentAccount, database, demoEnabled, moderate, openSession, passwordHash, passwordMatches } from "../lib/demo";
+import { closeSession, database, moderate, openSession, passwordHash, passwordMatches } from "../lib/demo";
+import { accountsEnabled, currentAccount } from "../lib/accounts";
+import { supabase } from "../lib/supabase";
+import { supabaseConfig } from "../lib/supabase-config";
 
-export type FormState = { message: string; errors?: Record<string, string> };
+export type FormState = { message: string; errors?: Record<string, string>; success?: boolean };
 const unavailable = { message: "El entorno local de demostración no está habilitado." };
 const field = (data: FormData, name: string) => String(data.get(name) ?? "").trim();
 
 export async function access(mode: "login" | "register", _state: FormState, data: FormData): Promise<FormState> {
-  if (!demoEnabled) return unavailable;
+  if (!accountsEnabled()) return unavailable;
   const email = field(data, "email").toLowerCase();
   const password = String(data.get("password") ?? "");
   const errors: Record<string, string> = {};
@@ -25,11 +28,28 @@ export async function access(mode: "login" | "register", _state: FormState, data
     if (!/^[\p{L}\p{N}_-]{3,24}$/u.test(alias)) errors.alias = "Usa de 3 a 24 letras, números, guiones o guiones bajos.";
     if (password !== String(data.get("confirm") ?? "")) errors.confirm = "Las contraseñas deben coincidir.";
     if (Object.keys(errors).length) return { message: "Revisa los campos indicados.", errors };
+    if (supabaseConfig()) {
+      const base = process.env.SJL_PUBLIC_URL || process.env.RENDER_EXTERNAL_URL;
+      if (!base) return { message: "Falta configurar la URL del portal para confirmar el correo." };
+      const client = await supabase();
+      const { data: signed, error } = await client.auth.signUp({
+        email, password, options: { data: { alias }, emailRedirectTo: new URL("/auth/callback", base).href },
+      });
+      if (error) return { message: "No se pudo crear la cuenta. Inténtalo de nuevo o inicia sesión si ya tienes una." };
+      if (!signed.session) return { message: "Revisa tu correo para confirmar la cuenta desde este navegador.", success: true };
+      redirect(field(data, "next") === "/reportar" ? "/reportar" : "/mis-reportes");
+    }
     const result = database().prepare("INSERT INTO accounts(email, alias, password) VALUES (?, ?, ?) ON CONFLICT(email) DO NOTHING").run(email, alias, passwordHash(password));
     if (result.changes === 0) return { message: "No se pudo crear la cuenta. Si ya tienes una, inicia sesión." };
     await openSession(Number(result.lastInsertRowid));
   } else {
     if (Object.keys(errors).length) return { message: "Revisa los campos indicados.", errors };
+    if (supabaseConfig()) {
+      const client = await supabase();
+      const { error } = await client.auth.signInWithPassword({ email, password });
+      if (error) return { message: "No se pudo iniciar sesión. Verifica tus datos y confirma el correo." };
+      redirect(field(data, "next") === "/reportar" ? "/reportar" : "/mis-reportes");
+    }
     const result = database().prepare("SELECT id, password FROM accounts WHERE email = ?").get(email) as { id: number; password: string } | undefined;
     if (!passwordMatches(password, result?.password) || !result) return { message: "Correo o contraseña incorrectos." };
     await openSession(result.id);
@@ -38,7 +58,12 @@ export async function access(mode: "login" | "register", _state: FormState, data
 }
 
 export async function logout() {
-  await closeSession();
+  if (supabaseConfig()) {
+    const client = await supabase();
+    await client.auth.signOut({ scope: "local" });
+  } else {
+    await closeSession();
+  }
   redirect("/");
 }
 
@@ -50,7 +75,7 @@ export async function submitReport(_state: FormState, data: FormData): Promise<F
   const period = periods.find(value => value === field(data, "period"));
   const requestId = field(data, "requestId");
   const detail = field(data, "detail");
-  if (!sector || !category || !period || !/^[a-f0-9-]{36}$/.test(requestId) || data.get("demo") !== "on") {
+  if (!sector || !category || !period || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(requestId) || data.get("demo") !== "on") {
     return { message: "Elige un sector, una categoría y un periodo y confirma el uso de la versión piloto." };
   }
   if (detail && (category !== "Otro" || detail.length > reportDetailLimit || /\p{Cc}/u.test(detail.replace(/[\r\n\t]/g, "")))) {
@@ -61,6 +86,15 @@ export async function submitReport(_state: FormState, data: FormData): Promise<F
   const [latitude, longitude] = parts.map(Number);
   if (position && (parts.length !== 2 || !parts.every(value => /^-\d+\.\d{2}$/.test(value)) || !suggestSector(latitude, longitude))) {
     return { message: "La ubicación aproximada está fuera del área disponible. Retírala o vuelve a intentarlo." };
+  }
+  if (typeof account.id === "string") {
+    const client = await supabase();
+    const { error } = await client.rpc("submit_sjl_report", {
+      p_request_id: requestId, p_sector: sector, p_category: category, p_period: period,
+      p_detail: detail || null, p_latitude: position ? latitude : null, p_longitude: position ? longitude : null,
+    });
+    if (error) return { message: "No se pudo guardar el reporte. Vuelve a intentar el envío." };
+    redirect("/mis-reportes?enviado=1");
   }
   const db = database();
   const result = db.prepare(`
@@ -87,6 +121,11 @@ export async function review(data: FormData) {
   const decision = field(data, "decision");
   if (!Number.isSafeInteger(id) || id < 1 || (decision !== "validated" && decision !== "attended" && decision !== "rejected")) {
     redirect("/moderacion?resultado=invalido");
+  }
+  if (typeof account.id === "string") {
+    const client = await supabase();
+    const { data: saved, error } = await client.rpc("moderate_sjl_report", { p_id: id, p_status: decision });
+    redirect(!error && saved ? "/moderacion?resultado=guardado" : "/moderacion?resultado=conflicto");
   }
   redirect(moderate(id, account.id, decision) ? "/moderacion?resultado=guardado" : "/moderacion?resultado=conflicto");
 }

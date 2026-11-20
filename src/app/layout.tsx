@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { currentAccount } from "../lib/demo";
+import { currentAccount } from "../lib/accounts";
 import { logout } from "./actions";
 import "./globals.css";
 

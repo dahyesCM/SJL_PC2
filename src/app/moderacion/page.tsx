@@ -1,16 +1,14 @@
 import Link from "next/link";
-import { currentAccount, database, type Report } from "../../lib/demo";
+import { currentAccount } from "../../lib/accounts";
+import { listReports } from "../../lib/reports";
 import { statuses } from "../../lib/catalog";
 import { review } from "../actions";
 export const dynamic = "force-dynamic";
 
 export default async function Moderacion({ searchParams }: { searchParams: Promise<{ resultado?: string }> }) {
-  if ((await currentAccount())?.role !== "moderator") return <main id="contenido" tabIndex={-1}><h1>Acceso restringido</h1><p>El panel requiere una cuenta moderadora de la demo.</p><Link href="/login">Ir al acceso</Link></main>;
-  const queue = database().prepare(`
-    SELECT id, category, sector, period, status,
-      (SELECT d.detail FROM report_details d WHERE d.report_id = reports.id) AS detail
-    FROM reports WHERE status IN ('pending','validated') ORDER BY id
-  `).all() as Report[];
+  const account = await currentAccount();
+  if (account?.role !== "moderator") return <main id="contenido" tabIndex={-1}><h1>Acceso restringido</h1><p>El panel requiere una cuenta moderadora.</p><Link href="/login">Ir al acceso</Link></main>;
+  const queue = await listReports(account, true);
   const result = (await searchParams).resultado;
   return <main id="contenido" tabIndex={-1}>
     <p className="district">Datos de demostración</p>
