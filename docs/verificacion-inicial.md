@@ -38,3 +38,9 @@ El 19 de noviembre se actualizaron PRAC-5 a PRAC-16 con el estado verificable de
 Las capturas del guion, los gráficos de planificación y los espacios para evidencia posterior se incorporaron al informe Word de avance. El informe queda como material de entrega y sus capturas se conservan fuera del repositorio.
 
 El siguiente control de PRAC-5 requiere un remoto de GitHub para abrir un PR de trabajo a test, comprobar el check y registrar su URL. PRAC-7 registra la integración de Supabase. PRAC-16 registra la decisión del proveedor y el despliegue tras las verificaciones.
+
+## Evidencia remota de Supabase
+
+En [Prueba_PC2](https://supabase.com/dashboard/project/svqmqhabxzhthvozcqsb) se aplicó desde el SQL Editor el esquema de `20261120000000_pilot.sql` del commit `a07ba6b`. La consulta posterior confirmó RLS activa en `profiles`, `reports` y `moderation_events`. La auditoría queda reservada a operaciones del servidor con privilegios definidos.
+
+Las pruebas SQL remotas comprobaron el aislamiento entre dos cuentas, la idempotencia del envío, la restricción de moderación y la auditoría. Las cuentas y reportes temporales se revirtieron al terminar. La prueba desde la aplicación desplegada sigue pendiente en PRAC-20.
