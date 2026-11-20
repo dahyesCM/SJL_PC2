@@ -44,3 +44,5 @@ El siguiente control de PRAC-5 requiere un remoto de GitHub para abrir un PR de 
 En [Prueba_PC2](https://supabase.com/dashboard/project/svqmqhabxzhthvozcqsb) se aplicó desde el SQL Editor el esquema de `20261120000000_pilot.sql` del commit `a07ba6b`. La consulta posterior confirmó RLS activa en `profiles`, `reports` y `moderation_events`. La auditoría queda reservada a operaciones del servidor con privilegios definidos.
 
 Las pruebas SQL remotas comprobaron el aislamiento entre dos cuentas, la idempotencia del envío, la restricción de moderación y la auditoría. Las cuentas y reportes temporales se revirtieron al terminar. La prueba desde la aplicación desplegada sigue pendiente en PRAC-20.
+
+La aplicación local se conectó a Prueba_PC2 y se probó con dos cuentas sintéticas de Supabase Auth. La primera inició sesión, envió el reporte de ensayo número 3 y lo vio pendiente de revisión en su perfil. La segunda inició sesión y vio su historial vacío. Una consulta en Supabase confirmó la fila guardada. Las dos cuentas y el reporte de ensayo se conservaron en el entorno de pruebas como evidencia. Falta repetir el recorrido desde una URL desplegada.
