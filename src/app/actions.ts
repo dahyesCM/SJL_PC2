@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { categories, periods, sectors } from "../lib/catalog";
 import { closeSession, currentAccount, database, demoEnabled, moderate, openSession, passwordHash, passwordMatches } from "../lib/demo";
 
-export type FormState = { message: string };
+export type FormState = { message: string; errors?: Record<string, string> };
 const unavailable = { message: "El entorno local de demostración no está habilitado." };
 const field = (data: FormData, name: string) => String(data.get(name) ?? "").trim();
 
@@ -12,21 +12,28 @@ export async function access(mode: "login" | "register", _state: FormState, data
   if (!demoEnabled) return unavailable;
   const email = field(data, "email").toLowerCase();
   const password = String(data.get("password") ?? "");
-  if (!/^[^\s@]+@example\.(test|invalid)$/.test(email) || email.length > 100 || password.length < 10 || password.length > 128) {
-    return { message: "Usa un correo ficticio @example.test y una contraseña de 10 a 128 caracteres." };
-  }
+  const errors: Record<string, string> = {};
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 100) errors.email = "Ingresa un correo válido.";
+  if (password.length < 10 || password.length > 128) errors.password = "Ingresa de 10 a 128 caracteres.";
   if (mode === "register") {
     const alias = field(data, "alias");
-    if (!/^[\p{L}\p{N}_-]{3,24}$/u.test(alias)) return { message: "Usa un alias de 3 a 24 letras, números, guiones o guiones bajos." };
+    const name = field(data, "name");
+    if (!/^[\p{L}\p{M}][\p{L}\p{M} .'’\-]{1,99}$/u.test(name)) errors.name = "Ingresa el nombre completo.";
+    if (!/^\d{8}$/.test(field(data, "dni"))) errors.dni = "El DNI debe tener 8 dígitos.";
+    if (!/^(?:\+51)?9\d{8}$/.test(field(data, "phone").replace(/[\s()-]/g, ""))) errors.phone = "Ingresa un celular peruano de 9 dígitos.";
+    if (!/^[\p{L}\p{N}_-]{3,24}$/u.test(alias)) errors.alias = "Usa de 3 a 24 letras, números, guiones o guiones bajos.";
+    if (password !== String(data.get("confirm") ?? "")) errors.confirm = "Las contraseñas deben coincidir.";
+    if (Object.keys(errors).length) return { message: "Revisa los campos indicados.", errors };
     const result = database().prepare("INSERT INTO accounts(email, alias, password) VALUES (?, ?, ?) ON CONFLICT(email) DO NOTHING").run(email, alias, passwordHash(password));
-    if (result.changes === 0) return { message: "No se pudo crear la cuenta. Prueba otro correo ficticio o inicia sesión." };
+    if (result.changes === 0) return { message: "No se pudo crear la cuenta. Si ya tienes una, inicia sesión." };
     await openSession(Number(result.lastInsertRowid));
   } else {
+    if (Object.keys(errors).length) return { message: "Revisa los campos indicados.", errors };
     const result = database().prepare("SELECT id, password FROM accounts WHERE email = ?").get(email) as { id: number; password: string } | undefined;
     if (!passwordMatches(password, result?.password) || !result) return { message: "Correo o contraseña incorrectos." };
     await openSession(result.id);
   }
-  redirect("/mis-reportes");
+  redirect(field(data, "next") === "/reportar" ? "/reportar" : "/mis-reportes");
 }
 
 export async function logout() {

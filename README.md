@@ -26,7 +26,7 @@ La aplicación local incluye una portada ilustrada, mapa esquemático interactiv
 
 ## Probar el flujo privado en local
 
-1. Abre `/register` con un correo ficticio como `vecino@example.test`, un alias y una contraseña exclusiva para la prueba de al menos 10 caracteres.
+1. Abre `/register` con un correo electrónico, un alias y una contraseña de al menos 10 caracteres. Completa nombre, DNI y celular con datos de ensayo. El servidor valida su formato y descarta esos tres campos. La cuenta local aún carece de verificación por correo o identidad.
 2. Crea un reporte ficticio en `/reportar` y revisa su estado en `/mis-reportes`.
 3. Para probar la moderación, registra una segunda cuenta con `moderador@example.test`. Desde la carpeta del proyecto, ejecútalo con Node.js 24:
 
@@ -37,5 +37,7 @@ La aplicación local incluye una portada ilustrada, mapa esquemático interactiv
 4. Abre `/moderacion` con la segunda cuenta. Valida y marca un reporte como atendido. Comprueba el cambio desde la primera cuenta.
 
 La base local SQLite vive en `.sjl-local/`, fuera de Git. El flujo privado solo se habilita en desarrollo. Para revisar una compilación local, se puede iniciar con `SJL_LOCAL_DEMO=1` y enlazar el servidor a `127.0.0.1`. La integración para producción con Supabase Auth, PostgreSQL y RLS sigue pendiente. Los estados de moderación son internos de la demo.
+
+El mapa puede pedir permiso de ubicación con la API de geolocalización del navegador. Una clasificación aproximada selecciona un sector ilustrativo si la posición está cerca del área cubierta. Las coordenadas se usan en el navegador. Los filtros y el mapa manual siguen disponibles si el permiso se deniega.
 
 El workflow inicial verifica código y compilación en PRs y pushes a `test` y `main`. Consulta la [planificación de sprints](docs/sprints.md), sus [gráficos editables](docs/graficos-sprints.md), el [diagrama lógico](docs/arquitectura.md) y la [matriz de verificación](docs/verificacion-inicial.md).

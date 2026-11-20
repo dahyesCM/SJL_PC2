@@ -1,2 +1,4 @@
 import { AccessPage } from "../access-page";
-export default function Register() { return <AccessPage register />; }
+export default async function Register({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  return <AccessPage register next={(await searchParams).next} />;
+}

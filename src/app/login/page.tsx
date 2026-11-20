@@ -1,2 +1,4 @@
 import { AccessPage } from "../access-page";
-export default function Login() { return <AccessPage />; }
+export default async function Login({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  return <AccessPage next={(await searchParams).next} />;
+}
