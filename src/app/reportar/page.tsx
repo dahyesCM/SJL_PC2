@@ -7,10 +7,10 @@ export const dynamic = "force-dynamic";
 export default async function Reportar() {
   if (!demoEnabled || !await currentAccount()) redirect("/login?next=/reportar");
   return <main id="contenido" className="narrow" tabIndex={-1}>
-    <p className="district">Datos de demostración</p>
+    <p className="district">Versión piloto</p>
     <h1>Nuevo reporte</h1>
     <p>Selecciona el sector, el tipo de incidente y el trimestre. Puedes revisar el estado en Mis reportes.</p>
-    <p className="notice">Este reporte es de demostración. Para una emergencia o denuncia real, consulta <Link href="/orientacion">los canales oficiales</Link>.</p>
+    <p className="notice">El reporte queda en SJL Previene. Para una emergencia o denuncia oficial, consulta <Link href="/orientacion">los canales de atención</Link>.</p>
     <ReportForm requestId={randomUUID()} />
   </main>;
 }

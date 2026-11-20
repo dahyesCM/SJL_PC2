@@ -39,6 +39,10 @@ export function database() {
       moderator_id INTEGER NOT NULL REFERENCES accounts(id), status TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS report_locations (
+      report_id INTEGER PRIMARY KEY REFERENCES reports(id) ON DELETE CASCADE,
+      latitude REAL NOT NULL, longitude REAL NOT NULL
+    );
     CREATE TRIGGER IF NOT EXISTS audit_report_status
     AFTER UPDATE OF status ON reports WHEN OLD.status <> NEW.status
     BEGIN
@@ -63,7 +67,7 @@ export function moderate(id: number, actor: number, next: Status) {
 }
 
 export type Account = { id: number; alias: string; role: "citizen" | "moderator" };
-export type Report = { id: number; category: string; sector: string; period: string; status: Status };
+export type Report = { id: number; category: string; sector: string; period: string; status: Status; has_location?: number };
 
 const digest = (token: string) => createHash("sha256").update(token).digest("hex");
 

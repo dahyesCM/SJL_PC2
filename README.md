@@ -22,7 +22,7 @@ El [backlog local](docs/jira.md) conserva las épicas, las fichas y las dependen
 
 ## Estado inicial
 
-La aplicación local incluye una portada ilustrada, mapa esquemático interactivo, orientación con enlaces oficiales, acceso con alias, reportes de prueba e historial por cuenta. La ilustración de portada fue generada para el proyecto a partir de un paisaje urbano inspirado en San Juan de Lurigancho. El mapa usa sectores ilustrativos y los agregados sintéticos incluidos en el código.
+La aplicación local incluye una portada ilustrada, mapa interactivo, orientación con enlaces oficiales, acceso con alias, reportes de prueba e historial por cuenta. La ilustración de portada fue generada para el proyecto a partir de un paisaje urbano inspirado en San Juan de Lurigancho. El mapa base usa teselas de [OpenStreetMap](https://www.openstreetmap.org/copyright). La capa de calor usa sectores ilustrativos y los agregados sintéticos incluidos en el código.
 
 ## Probar el flujo privado en local
 
@@ -38,6 +38,6 @@ La aplicación local incluye una portada ilustrada, mapa esquemático interactiv
 
 La base local SQLite vive en `.sjl-local/`, fuera de Git. El flujo privado solo se habilita en desarrollo. Para revisar una compilación local, se puede iniciar con `SJL_LOCAL_DEMO=1` y enlazar el servidor a `127.0.0.1`. La integración para producción con Supabase Auth, PostgreSQL y RLS sigue pendiente. Los estados de moderación son internos de la demo.
 
-El mapa puede pedir permiso de ubicación con la API de geolocalización del navegador. Una clasificación aproximada selecciona un sector ilustrativo si la posición está cerca del área cubierta. Las coordenadas se usan en el navegador. Los filtros y el mapa manual siguen disponibles si el permiso se deniega.
+El mapa puede pedir permiso de ubicación con la API de geolocalización del navegador. Una clasificación aproximada selecciona un sector si la posición está cerca del área cubierta. El explorador usa las coordenadas en el navegador. Al elegir adjuntar la ubicación a un reporte, la aplicación redondea las coordenadas a dos decimales antes de guardar el área de manera privada. La capa de calor sigue usando los agregados de prueba. El mapa manual, la lista y el envío siguen disponibles si se omite el permiso.
 
 El workflow inicial verifica código y compilación en PRs y pushes a `test` y `main`. Consulta la [planificación de sprints](docs/sprints.md), sus [gráficos editables](docs/graficos-sprints.md), el [diagrama lógico](docs/arquitectura.md) y la [matriz de verificación](docs/verificacion-inicial.md).

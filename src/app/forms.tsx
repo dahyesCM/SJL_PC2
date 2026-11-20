@@ -2,6 +2,7 @@
 import { useActionState, useState } from "react";
 import { access, submitReport } from "./actions";
 import { categories, sectors, periods } from "../lib/catalog";
+import { suggestSector } from "../lib/location";
 
 export function AccessForm({ register, disabled, next }: { register: boolean; disabled: boolean; next?: string }) {
   const [state, action, pending] = useActionState(access.bind(null, register ? "register" : "login"), { message: "" });
@@ -43,20 +44,62 @@ export function AccessForm({ register, disabled, next }: { register: boolean; di
 
 export function ReportForm({ requestId }: { requestId: string }) {
   const [state, action, pending] = useActionState(submitReport, { message: "" });
+  const [sector, setSector] = useState("");
+  const [position, setPosition] = useState("");
+  const [locating, setLocating] = useState(false);
+  const [locationNote, setLocationNote] = useState("");
+  function addLocation() {
+    if (!navigator.geolocation) {
+      setLocationNote("La ubicación no está disponible en este navegador. Puedes enviar el reporte con el sector.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(({ coords }) => {
+      setLocating(false);
+      const latitude = coords.latitude.toFixed(2);
+      const longitude = coords.longitude.toFixed(2);
+      const suggestion = coords.accuracy <= 2500 ? suggestSector(Number(latitude), Number(longitude)) : undefined;
+      if (!suggestion) {
+        setLocationNote("No se pudo ubicar el reporte dentro del área disponible. Puedes seleccionar el sector.");
+        return;
+      }
+      setSector(suggestion);
+      setPosition(latitude + "," + longitude);
+      setLocationNote("Ubicación aproximada añadida. Puedes cambiar el sector o retirar la ubicación.");
+    }, () => {
+      setLocating(false);
+      setLocationNote("No se obtuvo permiso o señal. Puedes enviar el reporte sin ubicación.");
+    }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 });
+  }
   const fields = [
-    { label: "Sector", name: "sector", values: sectors.map(value => ({ value, label: value })) },
     { label: "Categoría", name: "category", values: categories.map(value => ({ value, label: value })) },
     { label: "Periodo", name: "period", values: periods.map((value, index) => ({ value, label: index === 0 ? "Julio a septiembre de 2026" : "Octubre a diciembre de 2026" })) },
   ];
   return <form action={action} className="form-stack">
     <input type="hidden" name="requestId" value={requestId} />
+    <input type="hidden" name="position" value={position} />
+    <label>Sector
+      <select name="sector" value={sector} onChange={event => setSector(event.target.value)} required>
+        <option value="" disabled>Selecciona un sector</option>
+        {sectors.map(value => <option key={value}>{value}</option>)}
+      </select>
+    </label>
     {fields.map(({label, name, values}) => <label key={name}>{label}
       <select name={name} required defaultValue=""><option value="" disabled>Selecciona una opción</option>
         {values.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
       </select>
     </label>)}
-    <label className="check"><input type="checkbox" name="demo" required /> Confirmo que es un ensayo ficticio.</label>
+    <fieldset className="registration-details report-location">
+      <legend>Ubicación del incidente (opcional)</legend>
+      <small>Usa tu ubicación si estás en el sector del incidente. Solo se guarda un área aproximada y queda fuera del mapa público.</small>
+      <div className="review-actions">
+        <button type="button" className="button secondary" onClick={addLocation} disabled={locating}>{locating ? "Buscando…" : "Agregar mi ubicación"}</button>
+        {position && <button type="button" className="text-button" onClick={() => {setPosition(""); setLocationNote("Ubicación retirada.");}}>Retirar ubicación</button>}
+      </div>
+      {locationNote && <small role="status">{locationNote}</small>}
+    </fieldset>
+    <label className="check"><input type="checkbox" name="demo" required /> Entiendo que este reporte pertenece a la versión piloto.</label>
     {state.message && <p role="alert" className="notice">{state.message}</p>}
-    <button className="button" disabled={pending}>{pending ? "Guardando…" : "Enviar reporte demo"}</button>
+    <button className="button" disabled={pending || locating}>{pending ? "Guardando…" : "Enviar reporte"}</button>
   </form>;
 }

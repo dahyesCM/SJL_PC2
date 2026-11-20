@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { categories, periods, sectors } from "../lib/catalog";
+import { suggestSector } from "../lib/location";
 import { closeSession, currentAccount, database, demoEnabled, moderate, openSession, passwordHash, passwordMatches } from "../lib/demo";
 
 export type FormState = { message: string; errors?: Record<string, string> };
@@ -49,12 +50,28 @@ export async function submitReport(_state: FormState, data: FormData): Promise<F
   const period = periods.find(value => value === field(data, "period"));
   const requestId = field(data, "requestId");
   if (!sector || !category || !period || !/^[a-f0-9-]{36}$/.test(requestId) || data.get("demo") !== "on") {
-    return { message: "Elige un sector, una categoría y un periodo y confirma que es un ensayo ficticio." };
+    return { message: "Elige un sector, una categoría y un periodo y confirma el uso de la versión piloto." };
   }
-  database().prepare(`
+  const position = field(data, "position");
+  const parts = position.split(",");
+  const [latitude, longitude] = parts.map(Number);
+  if (position && (parts.length !== 2 || !parts.every(value => /^-\d+\.\d{2}$/.test(value)) || !suggestSector(latitude, longitude))) {
+    return { message: "La ubicación aproximada está fuera del área disponible. Retírala o vuelve a intentarlo." };
+  }
+  const db = database();
+  const result = db.prepare(`
     INSERT INTO reports(account_id, request_id, sector, category, period)
-    VALUES (?, ?, ?, ?, ?) ON CONFLICT(account_id, request_id) DO NOTHING
-  `).run(account.id, requestId, sector, category, period);
+    VALUES (?, ?, ?, ?, ?) ON CONFLICT(account_id, request_id) DO NOTHING RETURNING id
+  `);
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const created = result.get(account.id, requestId, sector, category, period) as { id: number } | undefined;
+    if (created && position) db.prepare("INSERT INTO report_locations VALUES (?, ?, ?)").run(created.id, latitude, longitude);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
   redirect("/mis-reportes?enviado=1");
 }
 
