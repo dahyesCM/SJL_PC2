@@ -1,4 +1,4 @@
-name: Verificación de SJL Previene
+name: Pipeline de SJL Previene
 
 on:
   pull_request:
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Verificar código y compilación
+    name: 01 · Construir y comprobar arranque
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -26,10 +26,22 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
-      - run: npm run verify
+      - name: Instalar dependencias del lockfile
+        run: npm ci
+      - name: Lint, TypeScript y compilación
+        run: npm run verify
+      - name: Comprobar portada y health check
+        run: |
+          set -euo pipefail
+          PORT=3100 node node_modules/next/dist/bin/next start --hostname 127.0.0.1 > /tmp/sjl-start.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          curl --fail --silent --show-error --retry 15 --retry-connrefused --retry-delay 1 --max-time 5 http://127.0.0.1:3100/api/health | jq --exit-status '.status == "ok"'
+          curl --fail --silent --show-error --max-time 10 http://127.0.0.1:3100/ -o /tmp/sjl-home.html
+          grep --quiet --fixed-strings 'Prevención ciudadana en SJL' /tmp/sjl-home.html
   database:
-    name: Comprobar aislamiento de reportes
+    name: 02 · Probar PostgreSQL y RLS
+    needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 10
     services:
@@ -54,3 +66,50 @@ jobs:
           for sql in supabase/tests/bootstrap.sql supabase/migrations/20261120000000_pilot.sql supabase/tests/pilot.sql; do
             docker exec -i "$PG_CONTAINER" psql -U postgres -v ON_ERROR_STOP=1 < "$sql"
           done
+  security:
+    name: 03 · Analizar seguridad
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: 24
+      - name: Auditar dependencias de producción (alta y crítica)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Buscar secretos versionados con Gitleaks
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITLEAKS_ENABLE_COMMENTS: "false"
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+      - name: Análisis estático de reglas del proyecto
+        env:
+          SEMGREP_SEND_METRICS: "off"
+          SEMGREP_ENABLE_VERSION_CHECK: "0"
+        run: |
+          python3 -m venv "$RUNNER_TEMP/sjl-semgrep"
+          "$RUNNER_TEMP/sjl-semgrep/bin/pip" install semgrep==1.185.0
+          "$RUNNER_TEMP/sjl-semgrep/bin/semgrep" scan --config .github/semgrep.yml --error --strict src
+  release:
+    name: 04 · Autorizar candidato
+    needs: [verify, database, security]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Exigir éxito de todos los controles
+        env:
+          BUILD_RESULT: ${{ needs.verify.result }}
+          TEST_RESULT: ${{ needs.database.result }}
+          SECURITY_RESULT: ${{ needs.security.result }}
+          CANDIDATE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          printf 'Compilación: %s\nPruebas: %s\nSeguridad: %s\n' "$BUILD_RESULT" "$TEST_RESULT" "$SECURITY_RESULT"
+          test "$BUILD_RESULT" = success && test "$TEST_RESULT" = success && test "$SECURITY_RESULT" = success || exit 1
+          printf '### Candidato verificado\n\nCommit: `%s`\n' "$CANDIDATE_SHA" >> "$GITHUB_STEP_SUMMARY"

@@ -48,6 +48,8 @@ La base SQLite de desarrollo vive en `.sjl-local/`, fuera de Git. Para revisar u
 
 CI ejecuta la migración y `supabase/tests/pilot.sql` en PostgreSQL desechable. El script comprueba aislamiento, idempotencia, roles y auditoría, y revierte sus datos de prueba al terminar.
 
+El gráfico de GitHub Actions muestra cuatro etapas. Primero se compila y se prueba el arranque. A continuación se ejecutan en paralelo las pruebas de PostgreSQL y el análisis de seguridad con npm audit, Gitleaks y las reglas Semgrep del proyecto. El último check autoriza el SHA solo cuando las tres etapas anteriores terminaron con éxito. Render registra por separado el despliegue del SHA aprobado.
+
 Para crear una cuenta moderadora de prueba, registra y confirma la cuenta antes de asignar su rol desde el SQL Editor de Supabase con privilegios administrativos. Actualiza `public.profiles.role` a `moderator` por el UUID confirmado de esa cuenta. Los formularios y la API pública carecen de permisos para asignar roles.
 
 El mapa puede pedir permiso de ubicación con la API de geolocalización del navegador. Una clasificación aproximada selecciona un sector si la posición está cerca del área cubierta. El explorador usa las coordenadas en el navegador. Al elegir adjuntar la ubicación a un reporte, la aplicación redondea las coordenadas a dos decimales antes de guardar el área de manera privada. La capa de calor sigue usando los agregados de prueba. El mapa manual, la lista y el envío siguen disponibles si se omite el permiso.

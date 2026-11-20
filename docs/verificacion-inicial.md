@@ -45,4 +45,12 @@ En [Prueba_PC2](https://supabase.com/dashboard/project/svqmqhabxzhthvozcqsb) se 
 
 Las pruebas SQL remotas comprobaron el aislamiento entre dos cuentas, la idempotencia del envío, la restricción de moderación y la auditoría. Las cuentas y reportes temporales se revirtieron al terminar. La prueba desde la aplicación desplegada sigue pendiente en PRAC-20.
 
-La aplicación local se conectó a Prueba_PC2 y se probó con dos cuentas sintéticas de Supabase Auth. La primera inició sesión, envió el reporte de ensayo número 3 y lo vio pendiente de revisión en su perfil. La segunda inició sesión y vio su historial vacío. Una consulta en Supabase confirmó la fila guardada. Las dos cuentas y el reporte de ensayo se conservaron en el entorno de pruebas como evidencia. Falta repetir el recorrido desde una URL desplegada.
+La aplicación local se conectó a Prueba_PC2 y se probó con dos cuentas sintéticas de Supabase Auth. La primera inició sesión, envió el reporte de ensayo número 3 y lo vio pendiente de revisión en su perfil. La segunda inició sesión y vio su historial vacío. Una consulta en Supabase confirmó la fila guardada. Las dos cuentas y el reporte de ensayo se conservaron en el entorno de pruebas como evidencia.
+
+## GitHub, CI y despliegue de pruebas
+
+- [Repositorio SJL_PC2](https://github.com/dahyesCM/SJL_PC2).
+- [PR de Supabase hacia test](https://github.com/dahyesCM/SJL_PC2/pull/1). Pasaron la compilación y la prueba de aislamiento en [Actions #1](https://github.com/dahyesCM/SJL_PC2/actions/runs/44677473071).
+- El mismo conjunto de checks pasó en la rama `test` para el SHA `4ef472283d899834ce047dd7ba86e370c2c2487b`. [Actions #2](https://github.com/dahyesCM/SJL_PC2/actions/runs/44677573944).
+- Render compiló y publicó ese SHA como primer despliegue de pruebas. [Evidencia del despliegue](https://dashboard.render.com/web/srv-dbvt624s728c73btaftg/deploys/dep-dbvt62ks728c73btago0) · [URL pública de pruebas](https://sjl-previene-test.onrender.com/).
+- Desde Render se comprobó la portada sin cuenta y el inicio de sesión de las dos cuentas de ensayo. La primera vio su reporte persistido en Supabase. La segunda vio su historial vacío. Quedan pendientes el despliegue de producción y la evidencia de escaneos de seguridad.
