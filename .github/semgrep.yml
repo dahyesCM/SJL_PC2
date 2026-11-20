@@ -1,0 +1,15 @@
+rules:
+  - id: sjl-evitar-html-sin-escape
+    languages: [typescript, javascript]
+    message: Conserva el escape de React al presentar el detalle de un reporte.
+    severity: ERROR
+    pattern-either:
+      - pattern-regex: '\bdangerouslySetInnerHTML\s*='
+      - pattern: $ELEMENT.innerHTML = $X
+  - id: sjl-evitar-evaluacion-dinamica
+    languages: [typescript, javascript]
+    message: Evita evaluar texto como código.
+    severity: ERROR
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: new Function(...)
