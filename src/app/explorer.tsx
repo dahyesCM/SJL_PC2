@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { categories, periods, sampleGroups, sectors } from "../lib/catalog";
+import { suggestSector } from "../lib/location";
+import { HeatMap } from "./heat-map";
 
 export function Explorer({ initialCategory = "", initialPeriod = "" }: { initialCategory?: string; initialPeriod?: string }) {
   const [category, selectCategory] = useState(initialCategory);
@@ -25,12 +27,11 @@ export function Explorer({ initialCategory = "", initialPeriod = "" }: { initial
     navigator.geolocation.getCurrentPosition(({ coords }) => {
       setLocating(false);
       const { latitude, longitude, accuracy } = coords;
-      // Extensión orientativa del esquema. No representa el límite distrital.
-      if (accuracy > 2500 || latitude < -12.04 || latitude > -11.87 || longitude < -77.055 || longitude > -76.93) {
+      const suggestion = accuracy <= 2500 ? suggestSector(latitude, longitude) : undefined;
+      if (!suggestion) {
         setLocationNote("No podemos sugerir un sector con esta ubicación. Elige uno manualmente.");
         return;
       }
-      const suggestion = latitude >= -11.94 ? "Norte" : latitude >= -11.99 ? "Centro" : "Sur";
       focus(suggestion);
       setLocationNote("Sector aproximado: " + suggestion + ". Puedes cambiarlo en el mapa.");
     }, () => {
@@ -44,7 +45,7 @@ export function Explorer({ initialCategory = "", initialPeriod = "" }: { initial
       <div><p className="district">EXPLORACIÓN COMUNITARIA</p><h2 id="map-title">Explora por sectores</h2></div>
       <Link className="button" href="/reportar">+ Nuevo reporte</Link>
     </div>
-    <p>Datos sintéticos de demostración · Sectores esquemáticos de SJL · Actualizado el 19 de noviembre de 2026.</p>
+    <p>Versión piloto · Mapa base de San Juan de Lurigancho · Cifras de prueba por sector.</p>
     <div className="stat-grid" aria-live="polite">
       <div><strong>{sum}</strong><span>Registros de la selección</span></div>
       <div><strong>{new Set(shown.map(group => group.sector)).size}</strong><span>Sectores con datos</span></div>
@@ -61,16 +62,13 @@ export function Explorer({ initialCategory = "", initialPeriod = "" }: { initial
     </div>
     {locationNote && <p role="status" className="muted">{locationNote}</p>}
     <div className="explorer-grid">
-      <div className="district-map" aria-label="Mapa esquemático por sectores">
-        <span className="north-arrow" aria-hidden="true">↑ N</span>
-        {totals.map(({sector,total}) => <button key={sector} type="button" aria-pressed={focused === sector} className={total >= 10 ? "higher" : total ? "medium" : "empty"} onClick={() => {focus(focused === sector ? null : sector); setLocationNote("");}}><span>Sector {sector}</span><strong>{total || "—"}</strong></button>)}
-      </div>
+      <HeatMap totals={totals} selected={focused} select={sector => {focus(focused === sector ? null : sector); setLocationNote("");}} />
       <div className="zone-details" aria-live="polite">
         <h3>{focused ? "Sector " + focused : "Lista de zonas"}</h3>
         {focused && <button type="button" className="text-button" onClick={() => focus(null)}>Ver todos los sectores</button>}
         {shown.length ? <ul className="zone-list">{shown.map(group => <li key={group.sector + group.period + group.category}><div><strong>{group.category}</strong><small>{group.sector} · {group.period}</small></div><span>{group.count}</span></li>)}</ul> : <p>Sin datos publicables para esta selección.</p>}
       </div>
     </div>
-    <p className="muted">El color más intenso representa más registros de demostración. Se omiten grupos menores de cinco. La falta de datos no indica que una zona sea segura.</p>
+    <p className="muted">El color más intenso representa más registros de prueba del sector. Los círculos se anclan a áreas aproximadas. Se omiten grupos menores de cinco.</p>
   </section>;
 }
