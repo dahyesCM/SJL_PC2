@@ -19,6 +19,8 @@ export default function Layout({ children }: { children: ReactNode }) {
           <nav aria-label="Navegación principal">
             <Link href="/mapa">Mapa</Link>
             <Link href="/orientacion">Orientación</Link>
+            <Link href="/mis-reportes">Mis reportes</Link>
+            <Link className="button secondary" href="/login">Ingresar</Link>
           </nav>
         </header>
         {children}
