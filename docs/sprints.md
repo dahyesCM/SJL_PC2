@@ -2,6 +2,20 @@
 
 Las fechas, velocidades y transiciones de la simulación corresponden al plan académico. La evidencia del tablero se obtendrá de Jira. [Equivalencia entre referencias y claves reales](jira.md)
 
+## Ajuste del tablero PRAC
+
+El Sprint 2 activo conserva las fechas registradas en Jira. Su meta incluye arquitectura, entorno de pruebas y verificación del recorrido vecinal. Se verificaron seis tarjetas en el tablero, PRAC-9 a PRAC-11 y las tres nuevas historias.
+
+| Historia nueva | Puntos en Jira | Criterio principal |
+| --- | ---: | --- |
+| [PRAC-18](https://damatmfr-1790533434032.atlassian.net/browse/PRAC-18) Arquitectura del backend | 3 | Diagrama versionado con autenticación, persistencia, entornos y límites de confianza |
+| [PRAC-19](https://damatmfr-1790533434032.atlassian.net/browse/PRAC-19) Backend en pruebas | 5 | SHA aprobado, URL verificable, migraciones y logs sin credenciales |
+| [PRAC-20](https://damatmfr-1790533434032.atlassian.net/browse/PRAC-20) Recorrido del vecino en remoto | 3 | Dos cuentas prueban persistencia e aislamiento del historial |
+
+El Sprint 3 quedó previsto del 7 al 11 de diciembre con PRAC-12, PRAC-13 y PRAC-14. El Sprint 4 quedó previsto del 14 al 18 de diciembre. PRAC-15, PRAC-16 y PRAC-17 tienen asignado el Sprint 4 en su ficha. El tablero mostró dos de esas tarjetas en la comprobación. Se conservaron los estados existentes.
+
+Las 11 unidades añadidas al Sprint 2 corresponden al cambio de alcance en Jira. Las series de abajo conservan los datos de la simulación original del informe.
+
 ## Simulación de cuatro sprints
 
 Fechas propuestas para la simulación. Ajusta el inicio en bloque si la fecha de entrega es distinta. Registra las series como **simuladas**. Sustituye o acompaña con capturas y mediciones reales cuando existan. Captura inicio, revisión y cierre de cada sprint y conserva pruebas de los movimientos del tablero.
